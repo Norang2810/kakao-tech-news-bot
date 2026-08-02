@@ -23,14 +23,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Restore sent-news history
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v6
         with:
           path: data/sent.json
           key: sent-news-${{ github.run_id }}
           restore-keys: sent-news-
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -45,7 +45,7 @@ jobs:
         run: python -m newsbot.main
       - name: Save sent-news history
         if: success() && inputs.dry_run != true && hashFiles('data/sent.json') != ''
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: data/sent.json
           key: sent-news-${{ github.run_id }}

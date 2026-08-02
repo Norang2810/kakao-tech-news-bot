@@ -12,7 +12,7 @@ on:
         default: false
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: kakao-tech-news-digest
@@ -43,6 +43,14 @@ jobs:
           SECRET_ROTATION_PAT: ${{ secrets.SECRET_ROTATION_PAT }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: python -m newsbot.main
+      - name: Publish today's digest page
+        if: success() && inputs.dry_run != true && hashFiles('docs/digest/index.html') != ''
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/digest/index.html
+          git diff --cached --quiet || git commit -m "content: publish today's tech digest"
+          git push
       - name: Save sent-news history
         if: success() && inputs.dry_run != true && hashFiles('data/sent.json') != ''
         uses: actions/cache/save@v6

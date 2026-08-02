@@ -72,6 +72,12 @@ def test_selection_prioritizes_openai_claude_and_elon():
     assert [item.category for item in chosen[:3]] == ["OpenAI", "Claude", "일론 머스크"]
 
 
+def test_selection_backfills_to_limit_without_priority_news():
+    items = [article("IT", f"일반 기술 기사 {index}", 10 - index) for index in range(9)]
+    chosen = select_balanced(items, 7)
+    assert len(chosen) == 7
+
+
 def test_render_digest_has_primary_and_extra_links(tmp_path):
     primary = [article("AI", f"핵심 기사 {index}") for index in range(7)]
     extras = [article("개발", f"추가 기사 {index}") for index in range(10)]

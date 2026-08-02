@@ -51,12 +51,13 @@ def test_rss_title_repetition_uses_neutral_fallback():
     assert "최신 소식" in summary
 
 
-def test_single_message_shows_five_priority_items():
+def test_single_message_shows_clean_three_item_preview():
     items = [article("AI", f"기사 {index}") for index in range(7)]
     messages = build_list_messages(items)
     assert len(messages) == 1
-    assert messages[0]["object_type"] == "feed"
-    assert len(messages[0]["item_content"]["items"]) == 5
+    assert messages[0]["object_type"] == "list"
+    assert len(messages[0]["contents"]) == 3
+    assert messages[0]["contents"][0]["description"]
     assert messages[0]["buttons"][0]["title"] == "추가 기사 더보기"
 
 

@@ -317,18 +317,18 @@ def link(url: str) -> dict[str, str]:
 
 
 def build_list_messages(articles: list[Article]) -> list[dict]:
-    """Build one Kakao feed card showing five headline rows."""
-    visible = articles[:5]
+    """Build one clean Kakao list preview; the platform allows three contents."""
+    visible = articles[:3]
     today = datetime.now(KST).strftime("%m/%d")
-    rows = [{"item": f"{index}. {article.title}"[:80], "item_op": article.category} for index, article in enumerate(visible, 1)]
+    contents = [
+        {"title": f"{index}. {article.title}"[:100], "description": article.summary[:100], "link": link(article.url)}
+        for index, article in enumerate(visible, 1)
+    ]
     template = {
-        "object_type": "feed",
-        "content": {
-            "title": f"[{today}] 오늘의 테크 브리핑",
-            "description": "OpenAI · Claude · 일론 머스크 · AI 우선 핵심 뉴스 5개",
-            "link": link(DIGEST_URL),
-        },
-        "item_content": {"profile_text": "AI Tech Newsbot", "items": rows},
+        "object_type": "list",
+        "header_title": f"[{today}] 오늘의 테크 브리핑",
+        "header_link": link(DIGEST_URL),
+        "contents": contents,
         "buttons": [{"title": "추가 기사 더보기", "link": link(DIGEST_URL)}],
     }
     return [template]
@@ -383,7 +383,7 @@ def main() -> None:
     for template in messages:
         send_kakao_template(access_token, template)
     save_sent(primary + extras, sent)
-    print(f"카카오톡 메시지 {len(messages)}개(표시 5개), 웹 핵심 기사 {len(primary)}개 게시 완료")
+    print(f"카카오톡 리스트 메시지 {len(messages)}개(미리보기 3개), 웹 핵심 기사 {len(primary)}개 게시 완료")
 
 
 if __name__ == "__main__":

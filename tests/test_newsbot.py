@@ -51,12 +51,24 @@ def test_rss_title_repetition_uses_neutral_fallback():
     assert "최신 소식" in summary
 
 
-def test_list_messages_are_two_with_three_items_each():
+def test_single_message_shows_five_priority_items():
     items = [article("AI", f"기사 {index}") for index in range(7)]
     messages = build_list_messages(items)
-    assert len(messages) == 2
-    assert [len(message["contents"]) for message in messages] == [3, 3]
-    assert messages[-1]["buttons"][0]["title"] == "추가 기사 더보기"
+    assert len(messages) == 1
+    assert messages[0]["object_type"] == "feed"
+    assert len(messages[0]["item_content"]["items"]) == 5
+    assert messages[0]["buttons"][0]["title"] == "추가 기사 더보기"
+
+
+def test_selection_prioritizes_openai_claude_and_elon():
+    items = [
+        article("AI", "일반 AI", 10),
+        article("OpenAI", "OpenAI 소식", 5),
+        article("Claude", "Claude 소식", 4),
+        article("일론 머스크", "머스크 소식", 3),
+    ]
+    chosen = select_balanced(items, 4)
+    assert [item.category for item in chosen[:3]] == ["OpenAI", "Claude", "일론 머스크"]
 
 
 def test_render_digest_has_primary_and_extra_links(tmp_path):

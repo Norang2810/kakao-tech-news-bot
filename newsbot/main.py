@@ -33,6 +33,7 @@ DIGEST_URL = "https://norang2810.github.io/kakao-tech-news-bot/digest/"
 SOURCES = {
     "OpenAI": "https://news.google.com/rss/search?q=OpenAI+when:1d&hl=ko&gl=KR&ceid=KR:ko",
     "Claude": "https://news.google.com/rss/search?q=Anthropic+Claude+when:1d&hl=ko&gl=KR&ceid=KR:ko",
+    "일론 머스크": "https://news.google.com/rss/search?q=(Elon+Musk+OR+일론+머스크)+when:1d&hl=ko&gl=KR&ceid=KR:ko",
     "AI": "https://news.google.com/rss/search?q=(AI+OR+인공지능)+when:1d&hl=ko&gl=KR&ceid=KR:ko",
     "개발": "https://news.google.com/rss/search?q=(개발자+OR+소프트웨어+OR+프로그래밍)+when:1d&hl=ko&gl=KR&ceid=KR:ko",
     "IT": "https://news.google.com/rss/search?q=(IT+OR+테크+OR+기술)+when:1d&hl=ko&gl=KR&ceid=KR:ko",
@@ -46,6 +47,7 @@ IMPORTANT_WORDS = {
 CATEGORY_TERMS = {
     "OpenAI": {"openai", "오픈ai", "오픈에이아이", "chatgpt", "챗gpt", "챗지피티", "sam altman", "샘 알트먼"},
     "Claude": {"claude", "클로드", "anthropic", "앤트로픽"},
+    "일론 머스크": {"elon musk", "일론 머스크", "머스크", "xai", "grok", "그록", "테슬라", "spacex"},
     "AI": {" ai ", "인공지능", "생성형", "llm", "모델", "에이전트", "머신러닝", "딥러닝"},
     "개발": {"개발자", "개발", "프로그래밍", "코딩", "소프트웨어", "오픈소스", "api", "프레임워크", "언어", "데브옵스"},
     "IT": {"it", "테크", "플랫폼", "클라우드", "반도체", "보안", "데이터", "모바일", "컴퓨팅", "기술기업"},
@@ -267,13 +269,17 @@ def enrich_articles(articles: list[Article], limit: int = 20) -> list[Article]:
 
 
 def select_balanced(articles: list[Article], limit: int = 7) -> list[Article]:
+    """Prioritize OpenAI, Claude, Elon Musk, then general AI and other tech."""
     chosen: list[Article] = []
-    for category in SOURCES:
+    priority_categories = ("OpenAI", "Claude", "일론 머스크")
+    for category in priority_categories:
         match = next((article for article in articles if article.category == category and article not in chosen), None)
         if match:
             chosen.append(match)
+    chosen.extend(article for article in articles if article.category in priority_categories and article not in chosen)
+    chosen.extend(article for article in articles if article.category == "AI" and article not in chosen)
     chosen.extend(article for article in articles if article not in chosen)
-    return sorted(chosen[:limit], key=lambda article: article.score, reverse=True)
+    return chosen[:limit]
 
 
 def request_json(url: str, headers: dict | None = None, form: dict | None = None) -> dict:
@@ -311,22 +317,21 @@ def link(url: str) -> dict[str, str]:
 
 
 def build_list_messages(articles: list[Article]) -> list[dict]:
-    visible = articles[:6]
-    if len(visible) >= 4:
-        groups = [visible[:3], visible[3:6]]
-    else:
-        groups = [visible]
+    """Build one Kakao feed card showing five headline rows."""
+    visible = articles[:5]
     today = datetime.now(KST).strftime("%m/%d")
-    messages = []
-    for index, group in enumerate(groups, 1):
-        contents = []
-        for number, article in enumerate(group, 1 + (index - 1) * 3):
-            contents.append({"title": f"{number}. {article.title}"[:100], "description": article.summary[:100], "link": link(article.url)})
-        template = {"object_type": "list", "header_title": f"[{today} 오늘의 테크 브리핑 {index}/{len(groups)}]", "header_link": link(DIGEST_URL), "contents": contents}
-        if index == len(groups):
-            template["buttons"] = [{"title": "추가 기사 더보기", "link": link(DIGEST_URL)}]
-        messages.append(template)
-    return messages
+    rows = [{"item": f"{index}. {article.title}"[:80], "item_op": article.category} for index, article in enumerate(visible, 1)]
+    template = {
+        "object_type": "feed",
+        "content": {
+            "title": f"[{today}] 오늘의 테크 브리핑",
+            "description": "OpenAI · Claude · 일론 머스크 · AI 우선 핵심 뉴스 5개",
+            "link": link(DIGEST_URL),
+        },
+        "item_content": {"profile_text": "AI Tech Newsbot", "items": rows},
+        "buttons": [{"title": "추가 기사 더보기", "link": link(DIGEST_URL)}],
+    }
+    return [template]
 
 
 def send_kakao_template(access_token: str, template: dict) -> None:

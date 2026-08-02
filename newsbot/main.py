@@ -380,7 +380,7 @@ def main() -> None:
     render_digest(primary, extras)
     messages = build_list_messages(primary)
     if os.getenv("DRY_RUN", "").lower() in {"1", "true", "yes"}:
-        print(json.dumps(messages, ensure_ascii=False, indent=2))
+        print(json.dumps(messages, ensure_ascii=True, indent=2))
         print(f"브리핑 페이지 생성: {DIGEST_FILE}")
         return
     access_token = refresh_kakao_token()

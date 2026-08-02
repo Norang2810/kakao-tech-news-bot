@@ -252,7 +252,7 @@ def enrich_articles(articles: list[Article], limit: int = 20) -> list[Article]:
         title_text = f" {article.title} ".lower()
         if article.category == "GitHub" or any(term in title_text for term in CATEGORY_TERMS[article.category]):
             relevant.append(article)
-    source_pool = relevant or articles
+    source_pool = relevant + [article for article in articles if article not in relevant]
     candidates: list[Article] = []
     per_category = max(2, limit // len(SOURCES))
     for category in SOURCES:

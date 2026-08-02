@@ -321,7 +321,11 @@ def build_list_messages(articles: list[Article]) -> list[dict]:
     visible = articles[:3]
     today = datetime.now(KST).strftime("%m/%d")
     contents = [
-        {"title": f"{index}. {article.title}"[:100], "description": article.summary[:100], "link": link(article.url)}
+        {
+            "title": f"{index}. {article.title}"[:100],
+            "description": (article.summary or article.rss_summary or "자세한 내용은 전체 브리핑에서 확인하세요.")[:100],
+            "link": link(article.url),
+        }
         for index, article in enumerate(visible, 1)
     ]
     template = {

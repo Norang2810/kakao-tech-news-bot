@@ -10,6 +10,7 @@
 - 카카오 리스트 카드 1개에 핵심 기사 3개의 제목·요약을 깔끔하게 표시한 후 전체 브리핑 페이지로 연결
 - 기사 선정은 OpenAI, Claude, 일론 머스크를 최우선으로 하고 다음으로 일반 AI 소식을 반영
 - 영문 기사는 제목·요약·핵심 내용을 한국어로 자동 번역하고, 번역 실패 시 원문으로 안전하게 대체
+- digest 페이지 게시 완료를 확인한 뒤 Discord 채널로 링크 알림 전송(선택 설정)
 - 핵심 7개와 추가 기사 10개를 `digest/` GitHub Pages에 매일 자동 게시
 - 카테고리별 기사를 고르게 선택하고 제목 중복 제거
 - 최근 14일 전송 이력을 보관해 다음 날 같은 기사 반복 전송 방지
@@ -54,6 +55,7 @@ curl -X POST https://kauth.kakao.com/oauth/token \
 | `KAKAO_CLIENT_SECRET` | 카카오 Client Secret. 기능을 껐다면 빈 값 |
 | `KAKAO_REFRESH_TOKEN` | 위에서 받은 refresh_token |
 | `SECRET_ROTATION_PAT` | 아래 설명의 GitHub fine-grained PAT |
+| `DISCORD_WEBHOOK_URL` | Discord 전용 채널 Webhook URL. 미설정 시 Discord 단계만 건너뜀 |
 
 `SECRET_ROTATION_PAT`은 이 저장소만 선택하고 **Repository permissions > Secrets: Read and write** 권한만 부여해 만듭니다. 카카오가 새 refresh token을 반환할 때 Secret을 안전하게 교체하는 용도입니다.
 
@@ -62,6 +64,23 @@ curl -X POST https://kauth.kakao.com/oauth/token \
 GitHub 저장소의 **Actions > Kakao tech news digest > Run workflow**에서 먼저 `dry_run`을 체크해 뉴스 수집 결과를 로그로 확인합니다. 정상이면 체크를 끄고 다시 실행합니다.
 
 스케줄은 `.github/workflows/news-digest.yml`의 cron으로 바꿀 수 있습니다. GitHub cron은 UTC이므로 한국시간에서 9시간을 빼야 합니다.
+
+## 4. Discord와 iPhone 알림 설정
+
+기존 Discord 서버를 사용해도 되지만, 개인용 서버에 `tech-news-alert` 같은 전용 텍스트 채널을 만드는 것을 권장합니다.
+
+1. Discord에서 개인 서버를 만들거나 기존 서버를 엽니다.
+2. `tech-news-alert` 텍스트 채널을 만듭니다.
+3. 채널 설정의 **연동(Integrations) > 웹후크(Webhooks)** 또는 서버 설정의 **연동 > 웹후크**로 이동합니다.
+4. 새 웹후크를 만들고 이름을 `AI Tech Newsbot`, 게시 채널을 `tech-news-alert`로 지정합니다.
+5. **웹후크 URL 복사**를 누릅니다. 이 주소는 비밀번호처럼 취급하고 공개 저장소나 채팅에 붙이지 않습니다.
+6. GitHub 저장소의 **Settings > Secrets and variables > Actions**에서 `DISCORD_WEBHOOK_URL`이라는 Repository secret을 만들고 복사한 URL을 값으로 저장합니다.
+7. iPhone **설정 > 알림 > Discord**에서 `알림 허용`, `잠금 화면`, `알림 센터`, `배너`, `사운드`를 켭니다.
+8. Discord iPhone 앱에서 서버가 음소거되지 않았는지 확인하고, `tech-news-alert` 채널을 길게 눌러 **알림 설정 > 모든 메시지**를 선택합니다. 서버 알림 설정의 **모바일 푸시 알림**도 켭니다.
+
+예약 실행은 카카오톡 전송 후 digest 페이지를 게시하고, 새 페이지가 실제로 열리는 것을 확인한 다음 Discord에 링크 메시지를 보냅니다. Discord 앱을 화면에 열어 둔 동안에는 모바일 푸시가 표시되지 않을 수 있습니다.
+
+Webhook URL이 노출되면 Discord에서 해당 Webhook을 삭제하거나 토큰을 재생성하고 GitHub Secret도 새 URL로 교체하세요.
 
 ## 로컬 확인
 

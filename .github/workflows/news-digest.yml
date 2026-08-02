@@ -41,6 +41,7 @@ jobs:
           KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
           KAKAO_REFRESH_TOKEN: ${{ secrets.KAKAO_REFRESH_TOKEN }}
           SECRET_ROTATION_PAT: ${{ secrets.SECRET_ROTATION_PAT }}
+          DIGEST_BUILD_ID: ${{ github.run_id }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: python -m newsbot.main
       - name: Publish today's digest page
@@ -51,6 +52,12 @@ jobs:
           git add docs/digest/index.html
           git diff --cached --quiet || git commit -m "content: publish today's tech digest"
           git push
+      - name: Wait for Pages and notify Discord
+        if: success() && inputs.dry_run != true
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DIGEST_BUILD_ID: ${{ github.run_id }}
+        run: python -m newsbot.discord_notify
       - name: Save sent-news history
         if: success() && inputs.dry_run != true && hashFiles('data/sent.json') != ''
         uses: actions/cache/save@v6

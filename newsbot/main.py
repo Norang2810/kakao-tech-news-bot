@@ -378,12 +378,13 @@ def send_kakao_template(access_token: str, template: dict) -> None:
 def render_digest(primary: list[Article], extras: list[Article], path: Path = DIGEST_FILE) -> None:
     escape = html.escape
     date_text = datetime.now(KST).strftime("%Y년 %m월 %d일")
+    build_id = html.escape(os.getenv("DIGEST_BUILD_ID", "local"), quote=True)
     cards = []
     for index, article in enumerate(primary, 1):
         bullets = "".join(f"<li>{escape(item)}</li>" for item in article.bullets[:2])
         cards.append(f'''<article id="article-{index}" class="card"><div class="meta"><span>{escape(article.category)}</span><span>{escape(article.source)}</span></div><h2><a href="{escape(article.original_url or article.url)}" target="_blank" rel="noopener">{index}. {escape(article.title)}</a></h2><p class="summary">{escape(article.summary)}</p><ul>{bullets}</ul><a class="read" href="{escape(article.original_url or article.url)}" target="_blank" rel="noopener">원문 기사 읽기 →</a></article>''')
     extra_items = "".join(f'''<li><a href="{escape(article.original_url or article.url)}" target="_blank" rel="noopener"><span>{escape(article.category)}</span>{escape(article.title)}</a></li>''' for article in extras[:10])
-    document = f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="매일 업데이트되는 IT·개발·AI 핵심 뉴스 브리핑"><title>{date_text} 오늘의 테크 브리핑</title><style>
+    document = f'''<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="매일 업데이트되는 IT·개발·AI 핵심 뉴스 브리핑"><meta name="digest-build-id" content="{build_id}"><title>{date_text} 오늘의 테크 브리핑</title><style>
 :root{{--bg:#f5f7fb;--card:#fff;--ink:#172033;--muted:#64748b;--line:#dfe5ef;--accent:#5b5bd6}}*{{box-sizing:border-box}}body{{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Noto Sans KR',sans-serif;line-height:1.65}}main{{width:min(920px,calc(100% - 32px));margin:0 auto;padding:54px 0 80px}}header{{margin-bottom:32px}}.eyebrow{{color:var(--accent);font-weight:800;letter-spacing:.08em}}h1{{font-size:clamp(2rem,5vw,3.4rem);line-height:1.15;margin:.25rem 0}}.lead{{color:var(--muted);font-size:1.05rem}}.card{{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px;margin:16px 0;box-shadow:0 8px 24px #27324a0a}}.meta{{display:flex;gap:8px;color:var(--accent);font-size:.85rem;font-weight:700}}.meta span+span:before{{content:'·';margin-right:8px;color:var(--muted)}}h2{{line-height:1.38;margin:.6rem 0}}a{{color:inherit;text-decoration:none}}h2 a:hover,.read:hover{{color:var(--accent)}}.summary{{font-size:1.05rem;font-weight:650}}li{{margin:.35rem 0}}.read{{display:inline-block;margin-top:8px;color:var(--accent);font-weight:750}}.extras{{margin-top:42px}}.extras ol{{background:#fff;border:1px solid var(--line);border-radius:20px;padding:20px 24px 20px 52px}}.extras a span{{font-size:.75rem;color:var(--accent);border:1px solid #c8c8ff;border-radius:999px;padding:2px 7px;margin-right:8px}}footer{{color:var(--muted);margin-top:38px;font-size:.85rem}}@media(max-width:600px){{main{{padding-top:30px}}.card{{padding:20px}}}}
 </style></head><body><main><header><div class="eyebrow">DAILY TECH DIGEST</div><h1>오늘의 테크 브리핑</h1><p class="lead">{date_text} · IT, 개발, AI, OpenAI, Claude 핵심 소식을 본문 기반으로 정리했습니다.</p></header><section><h2>오늘의 핵심 기사 7개</h2>{''.join(cards)}</section><section class="extras"><h2>추가로 볼 만한 기사</h2><ol>{extra_items}</ol></section><footer>자동 수집·요약된 내용이므로 중요한 판단 전에는 원문을 확인하세요.</footer></main></body></html>'''
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -408,15 +409,16 @@ def main() -> None:
     if len(primary) < 2:
         print("전송할 새 기사가 부족합니다.")
         return
-    render_digest(primary, extras)
     messages = build_list_messages(primary)
     if os.getenv("DRY_RUN", "").lower() in {"1", "true", "yes"}:
+        render_digest(primary, extras)
         print(json.dumps(messages, ensure_ascii=True, indent=2))
         print(f"브리핑 페이지 생성: {DIGEST_FILE}")
         return
     access_token = refresh_kakao_token()
     for template in messages:
         send_kakao_template(access_token, template)
+    render_digest(primary, extras)
     save_sent(primary + extras, sent)
     print(f"카카오톡 리스트 메시지 {len(messages)}개(미리보기 3개), 웹 핵심 기사 {len(primary)}개 게시 완료")
 

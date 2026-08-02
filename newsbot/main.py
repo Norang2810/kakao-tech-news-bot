@@ -20,6 +20,7 @@ from typing import Iterable
 import feedparser
 import requests
 import trafilatura
+from deep_translator import GoogleTranslator
 from googlenewsdecoder import gnewsdecoder
 
 KST = timezone(timedelta(hours=9))
@@ -70,6 +71,7 @@ class Article:
     summary: str = ""
     bullets: tuple[str, ...] = ()
     score: float = 0.0
+    original_title: str = ""
 
 
 def clean(value: str) -> str:
@@ -140,7 +142,35 @@ def deduplicate(articles: Iterable[Article]) -> list[Article]:
 
 
 def article_id(article: Article) -> str:
-    return hashlib.sha256(normalized_title(article.title).encode()).hexdigest()
+    return hashlib.sha256(normalized_title(article.original_title or article.title).encode()).hexdigest()
+
+
+def needs_korean_translation(text: str) -> bool:
+    korean = len(re.findall(r"[가-힣]", text))
+    latin = len(re.findall(r"[A-Za-z]", text))
+    return latin >= 12 and (korean < 5 or latin > korean * 3)
+
+
+def translate_text(text: str) -> str:
+    if not text or not needs_korean_translation(text):
+        return text
+    try:
+        translated = clean(GoogleTranslator(source="auto", target="ko").translate(text))
+        return translated or text
+    except Exception:
+        return text
+
+
+def translate_article(article: Article) -> Article:
+    if not needs_korean_translation(f"{article.title} {article.summary}"):
+        return article
+    return replace(
+        article,
+        original_title=article.original_title or article.title,
+        title=translate_text(article.title),
+        summary=translate_text(article.summary),
+        bullets=tuple(translate_text(item) for item in article.bullets),
+    )
 
 
 def load_sent_ids(path: Path = STATE_FILE) -> dict[str, str]:
@@ -243,7 +273,8 @@ def enrich_article(article: Article) -> Article:
     body_score = min(4.0, len(body) / 1200)
     category_score = 2.0 if article.category in {"OpenAI", "Claude", "개발", "GitHub"} else 1.0
     score = 10.0 - min(8.0, age_hours / 5) + keyword_score + relevance_score + trust_score + body_score + category_score
-    return replace(article, original_url=original_url, body=body, summary=summary, bullets=bullets, score=score)
+    enriched = replace(article, original_url=original_url, body=body, summary=summary, bullets=bullets, score=score, original_title=article.title)
+    return translate_article(enriched)
 
 
 def enrich_articles(articles: list[Article], limit: int = 20) -> list[Article]:

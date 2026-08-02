@@ -1,4 +1,5 @@
 feedparser==6.0.11
+deep-translator==1.11.4
 googlenewsdecoder==0.1.7
 requests==2.32.4
 trafilatura==2.2.0

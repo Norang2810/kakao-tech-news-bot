@@ -8,6 +8,7 @@ from newsbot.main import (
     deduplicate,
     exclude_previously_sent,
     load_sent_ids,
+    needs_korean_translation,
     render_digest,
     save_sent,
     select_balanced,
@@ -96,3 +97,14 @@ def test_sent_history_round_trip(tmp_path):
     sent = load_sent_ids(path)
     assert article_id(item) in sent
     assert exclude_previously_sent([item, article("AI", "새 기사")], sent)[0].title == "새 기사"
+
+
+def test_english_detection_for_translation():
+    assert needs_korean_translation("OpenAI releases a powerful new coding agent for developers")
+    assert not needs_korean_translation("OpenAI가 새로운 코딩 에이전트를 공개했다")
+
+
+def test_article_id_uses_original_title_after_translation():
+    original = article("AI", "OpenAI releases a new model")
+    translated = Article(**{**original.__dict__, "title": "오픈AI가 새 모델을 공개했다", "original_title": original.title})
+    assert article_id(original) == article_id(translated)

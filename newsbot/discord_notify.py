@@ -31,11 +31,12 @@ def wait_for_published_digest(build_id: str, attempts: int = 30, interval: float
     return False
 
 
-def notification_payload() -> dict:
+def notification_payload(test_mode: bool = False) -> dict:
     today = datetime.now(KST).strftime("%m/%d")
+    prefix = "🧪 **Discord 알림 테스트 성공**" if test_mode else f"📰 **[{today}] 오늘의 테크 브리핑이 도착했습니다.**"
     return {
         "username": "AI Tech Newsbot",
-        "content": f"📰 **[{today}] 오늘의 테크 브리핑이 도착했습니다.**\n{DIGEST_URL}",
+        "content": f"{prefix}\n{DIGEST_URL}",
         "embeds": [
             {
                 "title": "오늘의 핵심 기술 뉴스 확인하기",
@@ -51,18 +52,22 @@ def notification_payload() -> dict:
 
 def notify_discord() -> bool:
     webhook = os.getenv("DISCORD_WEBHOOK_URL", "").strip()
+    test_mode = os.getenv("DISCORD_TEST_MODE", "").lower() in {"1", "true", "yes"}
     if not webhook:
+        if test_mode:
+            raise RuntimeError("DISCORD_WEBHOOK_URL Secret이 등록되지 않았습니다.")
         print("DISCORD_WEBHOOK_URL이 없어 Discord 알림을 건너뜁니다.")
         return False
-    build_id = os.getenv("DIGEST_BUILD_ID", "").strip()
-    if not build_id:
-        raise RuntimeError("DIGEST_BUILD_ID가 없습니다.")
-    if not wait_for_published_digest(build_id):
-        raise RuntimeError("최신 digest 페이지가 제한 시간 안에 게시되지 않았습니다.")
-    response = requests.post(webhook_wait_url(webhook), json=notification_payload(), timeout=30)
+    if not test_mode:
+        build_id = os.getenv("DIGEST_BUILD_ID", "").strip()
+        if not build_id:
+            raise RuntimeError("DIGEST_BUILD_ID가 없습니다.")
+        if not wait_for_published_digest(build_id):
+            raise RuntimeError("최신 digest 페이지가 제한 시간 안에 게시되지 않았습니다.")
+    response = requests.post(webhook_wait_url(webhook), json=notification_payload(test_mode), timeout=30)
     if response.status_code not in {200, 204}:
         raise RuntimeError(f"Discord Webhook 전송 실패: HTTP {response.status_code} {response.text[:300]}")
-    print("Discord 채널 알림 전송 완료")
+    print("Discord 테스트 알림 전송 완료" if test_mode else "Discord 채널 알림 전송 완료")
     return True
 
 

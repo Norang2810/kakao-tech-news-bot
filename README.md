@@ -82,6 +82,8 @@ GitHub 저장소의 **Actions > Kakao tech news digest > Run workflow**에서 �
 
 Webhook URL이 노출되면 Discord에서 해당 Webhook을 삭제하거나 토큰을 재생성하고 GitHub Secret도 새 URL로 교체하세요.
 
+Webhook 등록 후 **Actions > Test Discord notification > Run workflow**를 실행하면 카카오톡 전송 없이 Discord와 iPhone 푸시만 시험할 수 있습니다.
+
 ## 로컬 확인
 
 ```bash

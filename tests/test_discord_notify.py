@@ -21,6 +21,7 @@ def test_wait_for_published_digest(monkeypatch):
 
 def test_missing_webhook_skips_safely(monkeypatch):
     monkeypatch.delenv("DISCORD_WEBHOOK_URL", raising=False)
+    monkeypatch.delenv("DISCORD_TEST_MODE", raising=False)
     assert discord_notify.notify_discord() is False
 
 
@@ -34,3 +35,14 @@ def test_discord_notification_posts_after_publish(monkeypatch):
     assert len(calls) == 1
     assert discord_notify.DIGEST_URL in calls[0][1]["content"]
     assert calls[0][1]["allowed_mentions"] == {"parse": []}
+
+
+def test_discord_test_mode_skips_page_wait(monkeypatch):
+    calls = []
+    monkeypatch.setenv("DISCORD_WEBHOOK_URL", "https://discord.com/api/webhooks/1/token")
+    monkeypatch.setenv("DISCORD_TEST_MODE", "true")
+    monkeypatch.delenv("DIGEST_BUILD_ID", raising=False)
+    monkeypatch.setattr(discord_notify, "wait_for_published_digest", lambda build_id: (_ for _ in ()).throw(AssertionError("must not wait")))
+    monkeypatch.setattr(discord_notify.requests, "post", lambda url, json, timeout: calls.append(json) or Response())
+    assert discord_notify.notify_discord() is True
+    assert "테스트 성공" in calls[0]["content"]

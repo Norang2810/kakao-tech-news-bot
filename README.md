@@ -81,7 +81,7 @@ GitHub 저장소의 **Actions > Kakao tech news digest > Run workflow**에서 �
 
 본인 멘션으로 알림을 확실히 받으려면 Discord의 **사용자 설정 > 고급 > 개발자 모드**를 켠 뒤 본인 프로필에서 **사용자 ID 복사**를 선택합니다. GitHub Actions Repository secret `DISCORD_USER_ID`를 만들고 해당 숫자를 저장하세요. 메시지는 `<@사용자ID>` 형식으로 전송되며, `allowed_mentions.users`에는 이 사용자 ID만 허용됩니다.
 
-예약 실행은 카카오톡 전송 후 digest 페이지를 게시하고, 새 페이지가 실제로 열리는 것을 확인한 다음 Discord에 링크 메시지를 보냅니다. Discord 앱을 화면에 열어 둔 동안에는 모바일 푸시가 표시되지 않을 수 있습니다.
+예약 실행은 카카오톡 전송 후 digest 페이지를 게시하고, 새 페이지가 실제로 열리는 것을 확인한 다음 Discord에 링크 메시지를 보냅니다. iPhone에서 시험할 때는 모바일 Discord 앱을 화면에 열어 두지 말고, PC Discord도 완전히 종료하거나 PC를 잠근 뒤 iPhone 화면을 잠그세요. PC Discord가 활성 상태이면 Discord가 PC에서 이미 알림을 확인할 수 있다고 판단해 iPhone 푸시를 억제하거나 지연할 수 있습니다.
 
 Webhook URL이 노출되면 Discord에서 해당 Webhook을 삭제하거나 토큰을 재생성하고 GitHub Secret도 새 URL로 교체하세요.
 

@@ -1,0 +1,51 @@
+name: Kakao tech news digest
+
+on:
+  schedule:
+    # 매일 한국시간 오전 8시 (UTC 전날 23시)
+    - cron: "7 23 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "카카오 전송 없이 로그로만 확인"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kakao-tech-news-digest
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore sent-news history
+        uses: actions/cache/restore@v4
+        with:
+          path: data/sent.json
+          key: sent-news-${{ github.run_id }}
+          restore-keys: sent-news-
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Collect, summarize, and send
+        env:
+          KAKAO_REST_API_KEY: ${{ secrets.KAKAO_REST_API_KEY }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          KAKAO_REFRESH_TOKEN: ${{ secrets.KAKAO_REFRESH_TOKEN }}
+          SECRET_ROTATION_PAT: ${{ secrets.SECRET_ROTATION_PAT }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: python -m newsbot.main
+      - name: Save sent-news history
+        if: success() && inputs.dry_run != true && hashFiles('data/sent.json') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: data/sent.json
+          key: sent-news-${{ github.run_id }}

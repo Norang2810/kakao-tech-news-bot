@@ -71,6 +71,11 @@ def notify_discord() -> bool:
     response = requests.post(webhook_wait_url(webhook), json=notification_payload(test_mode, user_id), timeout=30)
     if response.status_code not in {200, 204}:
         raise RuntimeError(f"Discord Webhook 전송 실패: HTTP {response.status_code} {response.text[:300]}")
+    if user_id:
+        message = response.json()
+        mentioned_ids = {str(user.get("id", "")) for user in message.get("mentions", [])}
+        if user_id not in mentioned_ids:
+            raise RuntimeError("Discord가 지정한 사용자 ID를 실제 멘션으로 처리하지 않았습니다.")
     print("Discord 테스트 알림 전송 완료" if test_mode else "Discord 채널 알림 전송 완료")
     return True
 

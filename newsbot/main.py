@@ -383,7 +383,7 @@ def main() -> None:
     for template in messages:
         send_kakao_template(access_token, template)
     save_sent(primary + extras, sent)
-    print(f"카카오톡 리스트 메시지 {len(messages)}개, 핵심 기사 {len(primary)}개 전송 완료")
+    print(f"카카오톡 메시지 {len(messages)}개(표시 5개), 웹 핵심 기사 {len(primary)}개 게시 완료")
 
 
 if __name__ == "__main__":

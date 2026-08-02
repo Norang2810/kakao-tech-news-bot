@@ -56,6 +56,7 @@ curl -X POST https://kauth.kakao.com/oauth/token \
 | `KAKAO_REFRESH_TOKEN` | 위에서 받은 refresh_token |
 | `SECRET_ROTATION_PAT` | 아래 설명의 GitHub fine-grained PAT |
 | `DISCORD_WEBHOOK_URL` | Discord 전용 채널 Webhook URL. 미설정 시 Discord 단계만 건너뜀 |
+| `DISCORD_USER_ID` | 알림 메시지에서 멘션할 본인 Discord 사용자 ID |
 
 `SECRET_ROTATION_PAT`은 이 저장소만 선택하고 **Repository permissions > Secrets: Read and write** 권한만 부여해 만듭니다. 카카오가 새 refresh token을 반환할 때 Secret을 안전하게 교체하는 용도입니다.
 
@@ -77,6 +78,8 @@ GitHub 저장소의 **Actions > Kakao tech news digest > Run workflow**에서 �
 6. GitHub 저장소의 **Settings > Secrets and variables > Actions**에서 `DISCORD_WEBHOOK_URL`이라는 Repository secret을 만들고 복사한 URL을 값으로 저장합니다.
 7. iPhone **설정 > 알림 > Discord**에서 `알림 허용`, `잠금 화면`, `알림 센터`, `배너`, `사운드`를 켭니다.
 8. Discord iPhone 앱에서 서버가 음소거되지 않았는지 확인하고, `tech-news-alert` 채널을 길게 눌러 **알림 설정 > 모든 메시지**를 선택합니다. 서버 알림 설정의 **모바일 푸시 알림**도 켭니다.
+
+본인 멘션으로 알림을 확실히 받으려면 Discord의 **사용자 설정 > 고급 > 개발자 모드**를 켠 뒤 본인 프로필에서 **사용자 ID 복사**를 선택합니다. GitHub Actions Repository secret `DISCORD_USER_ID`를 만들고 해당 숫자를 저장하세요. 메시지는 `<@사용자ID>` 형식으로 전송되며, `allowed_mentions.users`에는 이 사용자 ID만 허용됩니다.
 
 예약 실행은 카카오톡 전송 후 digest 페이지를 게시하고, 새 페이지가 실제로 열리는 것을 확인한 다음 Discord에 링크 메시지를 보냅니다. Discord 앱을 화면에 열어 둔 동안에는 모바일 푸시가 표시되지 않을 수 있습니다.
 

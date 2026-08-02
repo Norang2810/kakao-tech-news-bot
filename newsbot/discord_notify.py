@@ -31,12 +31,13 @@ def wait_for_published_digest(build_id: str, attempts: int = 30, interval: float
     return False
 
 
-def notification_payload(test_mode: bool = False) -> dict:
+def notification_payload(test_mode: bool = False, user_id: str = "") -> dict:
     today = datetime.now(KST).strftime("%m/%d")
     prefix = "🧪 **Discord 알림 테스트 성공**" if test_mode else f"📰 **[{today}] 오늘의 테크 브리핑이 도착했습니다.**"
+    mention = f"<@{user_id}> " if user_id else ""
     return {
         "username": "AI Tech Newsbot",
-        "content": f"{prefix}\n{DIGEST_URL}",
+        "content": f"{mention}{prefix}\n{DIGEST_URL}",
         "embeds": [
             {
                 "title": "오늘의 핵심 기술 뉴스 확인하기",
@@ -46,12 +47,13 @@ def notification_payload(test_mode: bool = False) -> dict:
                 "footer": {"text": "카카오톡 브리핑 전송 및 웹페이지 게시 완료"},
             }
         ],
-        "allowed_mentions": {"parse": []},
+        "allowed_mentions": {"parse": [], "users": [user_id] if user_id else []},
     }
 
 
 def notify_discord() -> bool:
     webhook = os.getenv("DISCORD_WEBHOOK_URL", "").strip()
+    user_id = os.getenv("DISCORD_USER_ID", "").strip()
     test_mode = os.getenv("DISCORD_TEST_MODE", "").lower() in {"1", "true", "yes"}
     if not webhook:
         if test_mode:
@@ -64,7 +66,9 @@ def notify_discord() -> bool:
             raise RuntimeError("DIGEST_BUILD_ID가 없습니다.")
         if not wait_for_published_digest(build_id):
             raise RuntimeError("최신 digest 페이지가 제한 시간 안에 게시되지 않았습니다.")
-    response = requests.post(webhook_wait_url(webhook), json=notification_payload(test_mode), timeout=30)
+    if user_id and not user_id.isdecimal():
+        raise RuntimeError("DISCORD_USER_ID는 숫자로 된 Discord 사용자 ID여야 합니다.")
+    response = requests.post(webhook_wait_url(webhook), json=notification_payload(test_mode, user_id), timeout=30)
     if response.status_code not in {200, 204}:
         raise RuntimeError(f"Discord Webhook 전송 실패: HTTP {response.status_code} {response.text[:300]}")
     print("Discord 테스트 알림 전송 완료" if test_mode else "Discord 채널 알림 전송 완료")

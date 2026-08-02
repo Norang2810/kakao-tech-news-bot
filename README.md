@@ -16,13 +16,13 @@
 
 1. [Kakao Developers](https://developers.kakao.com/)에서 애플리케이션을 만듭니다.
 2. **앱 > 플랫폼 키**에서 `REST API 키`를 확인합니다.
-3. **카카오 로그인**을 활성화하고 Redirect URI에 `https://example.com/oauth`를 등록합니다.
+3. **카카오 로그인**을 활성화하고 Redirect URI에 `https://norang2810.github.io/kakao-tech-news-bot/oauth/`를 등록합니다.
 4. **카카오 로그인 > 동의항목**에서 `카카오톡 메시지 전송(talk_message)`을 선택 동의로 설정합니다.
-5. **제품 링크 관리 > 웹 도메인**에 `https://news.google.com`과 `https://github.blog`를 등록합니다.
+5. **제품 링크 관리 > 웹 도메인**에 `https://news.google.com`, `https://github.blog`, `https://norang2810.github.io`를 등록합니다.
 6. 아래 URL의 값을 바꿔 브라우저에서 열고 동의합니다.
 
 ```text
-https://kauth.kakao.com/oauth/authorize?client_id=REST_API_KEY&redirect_uri=https%3A%2F%2Fexample.com%2Foauth&response_type=code&scope=talk_message
+https://kauth.kakao.com/oauth/authorize?client_id=REST_API_KEY&redirect_uri=https%3A%2F%2Fnorang2810.github.io%2Fkakao-tech-news-bot%2Foauth%2F&response_type=code&scope=talk_message
 ```
 
 7. 이동된 주소창의 `?code=...` 값을 복사한 뒤, 1회용 인가 코드를 즉시 토큰으로 교환합니다. Client Secret 기능이 켜져 있으면 마지막 줄도 포함합니다.
@@ -32,7 +32,7 @@ curl -X POST https://kauth.kakao.com/oauth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'grant_type=authorization_code' \
   -d 'client_id=REST_API_KEY' \
-  -d 'redirect_uri=https://example.com/oauth' \
+  -d 'redirect_uri=https://norang2810.github.io/kakao-tech-news-bot/oauth/' \
   -d 'code=인가_코드' \
   -d 'client_secret=CLIENT_SECRET'
 ```

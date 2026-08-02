@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>카카오 인증 완료</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 680px; margin: 64px auto; padding: 0 20px; line-height: 1.6; }
+    code { background: #f3f4f6; padding: 4px 7px; border-radius: 5px; word-break: break-all; }
+    button { padding: 10px 16px; border: 0; border-radius: 8px; background: #fee500; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>카카오 인증이 완료되었습니다</h1>
+  <p>아래 인가 코드를 복사하세요. 이 코드는 일회용이며 짧은 시간 안에 사용해야 합니다.</p>
+  <p><code id="code">인가 코드를 확인하는 중…</code></p>
+  <button id="copy" type="button">코드 복사</button>
+  <script>
+    const code = new URLSearchParams(location.search).get('code');
+    const output = document.querySelector('#code');
+    output.textContent = code || '인가 코드가 없습니다. 카카오 로그인부터 다시 진행하세요.';
+    document.querySelector('#copy').addEventListener('click', async () => {
+      if (code) await navigator.clipboard.writeText(code);
+    });
+  </script>
+</body>
+</html>
